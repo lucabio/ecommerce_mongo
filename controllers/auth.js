@@ -2,22 +2,31 @@ const User = require('../models/user');
 
 const bcrypt = require('bcryptjs');
 
+var validate = require("validate.js");
+
+const {check,validationResult} = require('express-validator');
+
 exports.getLogin = (req, res, next) => {
-    console.log(req.get('Cookie'));
+    let message = req.flash('error');
+    if(message.length > 0){
+        message = message[0]
+    }else{
+        message = null;
+    }
     res.render('auth/login', {
         pageTitle: 'Login',
         path: '/login',
-        errorMessage: null,
-        isAuthenticated: req.session.isLoggedIn
+        errorMessage: message
     })
 };
 
 exports.getSignup = (req, res, next) => {
-    console.log(req.get('Cookie'));
+    console.log('validate script' + validate);
     res.render('auth/signup', {
         pageTitle: 'Signup',
         path: '/signup',
-        isAuthenticated: req.session.isLoggedIn
+        validate : validate,
+        errorMessage : null
     })
 };
 
@@ -47,30 +56,42 @@ exports.postLogin = (req, res, next) => {
                         }
                     })
                     .catch(err => {
-                        res.render('auth/login', {
-                            pageTitle: 'Login',
-                            path: '/login',
-                            isAuthenticated: false,
-                            errorMessage: err
-                        })
+                        req.flash('error',err);
+
+                        res.redirect('/login')
+                        // res.render('auth/login', {
+                        //     pageTitle: 'Login',
+                        //     path: '/login',
+                        //     errorMessage: err
+                        // })
                     })
             }
         })
         .catch(err => {
             console.log(`error while login ${err}`);
+            req.flash('error',err);
 
-            res.render('auth/login', {
-                pageTitle: 'Login',
-                path: '/login',
-                isAuthenticated: false,
-                errorMessage: err
-            })
+            res.redirect('/login')
+            // res.render('auth/login', {
+            //     pageTitle: 'Login',
+            //     path: '/login',
+            //     errorMessage: err
+            // })
         })
 };
 
 exports.postSignup = (req, res, next) => {
     const data = req.body;
-
+    const errors = validationResult(req);
+    if(!errors.isEmpty()){
+        console.log(errors);
+        return res.status(422).render('auth/signup', {
+            pageTitle: 'Signup',
+            path: '/signup',
+            errorMessage: errors.array()
+        })
+        
+    }
     //check if user already exists
     User.findOne({ 'email': data.email })
         .then(user => {
@@ -79,7 +100,6 @@ exports.postSignup = (req, res, next) => {
                 res.render('auth/login', {
                     pageTitle: 'Login',
                     path: '/login',
-                    isAuthenticated: false,
                     errorMessage: err
                 })
             } else {

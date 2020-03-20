@@ -38,7 +38,9 @@
         <% } else { %>
         <ul class="main-header__item-list">
             <li class="main-header__item">
+                <span style="color: white;font-size: 12px;font-weight:bold;">Welcome back <%= emailWelcome %>!</span>
                 <form action="/logout" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <button type="submit">Logout</button>
                 </form>
             </li>
@@ -84,7 +86,11 @@
     <% } else { %>
     <ul class="mobile-nav__item-list">
         <li class="mobile-nav__item">
+            <span>Welcome back <%= emailWelcome %> </span>
+        </li>
+        <li class="mobile-nav__item">
             <form action="/logout" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                 <button type="submit">Logout</button>
             </form>
         </li>

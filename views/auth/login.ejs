@@ -8,9 +8,10 @@
 
     <main>
         <% if(errorMessage) { %>
-            <p class="centered" style="color: red;margin: auto;font-weight: bold;margin: 1rem 0;"><%= errorMessage %></p>
+            <div class="user-message user-message--error"><%= errorMessage %></div>
         <% } %>  
         <form class="login-form" action="/login" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <!-- <div class="form-control">
                 <label for="title">Name</label>
                 <input type="text" name="name" id="name">

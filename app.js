@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
+const csrf = require('csurf');
+const flash = require('connect-flash');
 const path = require('path');
 const bodyParser = require('body-parser');
 
@@ -18,6 +20,8 @@ const store = new MongoDBStore({
     uri: MONGODB_URI,
     collection : 'sessions'
 });
+
+const csrfProtection = csrf();
 
 app.set('view engine', 'ejs');
 app.set('views', 'views');
@@ -36,6 +40,9 @@ app.use(
     session({secret : 'my secret', resave : false, saveUninitialized : false, store : store})
     );
 
+app.use(csrfProtection);
+app.use(flash());
+
 //now i grab an pass in ALL route the user that is using the app
 app.use((req, res, next) => {
     //If there's no session,i just proceed with the request (which won't be anything regarding the req.user as i'm hiding all the requests)
@@ -53,6 +60,15 @@ app.use((req, res, next) => {
             console.log(`error on retrieving user to pass all view ${err}`);
         })
 });
+//Add some local variables (which means that they are available in ALL Views)
+app.use((req,res,next)=>{
+    res.locals.isAuthenticated = req.session.isLoggedIn;
+    res.locals.csrfToken = req.csrfToken();
+    
+    res.locals.emailWelcome = req.session.isLoggedIn? req.user.email : null;
+    
+    next();
+})
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);

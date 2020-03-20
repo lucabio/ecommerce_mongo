@@ -1,35 +1,51 @@
 <%- include('../includes/head.ejs') %>
     <link rel="stylesheet" href="/css/forms.css">
     <link rel="stylesheet" href="/css/auth.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <script src="/js/validate.js"></script>
 </head>
 
 <body>
    <%- include('../includes/navigation.ejs') %>
 
     <main>
-        <form class="login-form" action="/signup" method="POST">
+        <% if(errorMessage) { %>
+            <div class="user-message user-message--error"><%= errorMessage %></div>
+        <% } %>
+        <form id="main" class="login-form" action="/signup" method="POST">
+            <div class="form-control">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            </div>
+            
             <div class="form-control">
                 <label for="name">Name</label>
                 <input type="text" name="name" id="name">
+                <div class="col-sm-5 messages"></div>
             </div>
             <div class="form-control">
                 <label for="surname">Surname</label>
                 <input type="text" name="surname" id="surname">
+                <div class="col-sm-5 messages"></div>
             </div>
             <div class="form-control">
                 <label for="email">E-Mail</label>
                 <input type="text" name="email" id="email">
+                <div class="col-sm-5 messages"></div>
             </div>
             <div class="form-control">
                 <label for="password">Password</label>
                 <input type="password" name="password" id="password">
+                <div class="col-sm-5 messages"></div>
             </div>
             <div class="form-control">
                 <label for="confirmPassword">Confirm Password</label>
                 <input type="password" name="confirmPassword" id="confirmPassword">
+                <div class="col-sm-5 messages"></div>
             </div>
-
-        <button class="btn" type="submit">Sign Up</button>
+            <div class="form-control">
+                <button class="btn" type="submit">Sign Up</button>
+            </div>
         </form>
     </main>
+    <script src="/js/validation_script.js"></script>
 <%- include('../includes/end.ejs') %>
