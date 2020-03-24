@@ -128,7 +128,10 @@ exports.postSignup = (req, res, next) => {
                     res.redirect('/login')
                 })
                 .catch(err => {
-                    console.log(`postAddproduct error ${err}`);
+                    const error = new Error();
+                    error.httpStatusCode = 500;
+                    error.message = err;
+                    return next(error);
                 })
         })
 };
@@ -186,7 +189,12 @@ exports.postResetPassword = (req, res, next) => {
                     console.log(`Email sent successfully ${res}`)
                 }
             });
-        }).catch(err => console.log(err))
+        }).catch(err => {
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
+        })
     });
 }
 
@@ -207,7 +215,12 @@ exports.getSetNewPassword = (req, res, next) => {
             passwordToken: token,
             errorMessage: message
         })
-    }).catch(err => console.log(err))
+    }).catch(err => {
+        const error = new Error();
+        error.httpStatusCode = 500;
+        error.message = err;
+        return next(error);
+    })
 }
 
 exports.postSetNewPassword = (req, res, next) => {
@@ -243,7 +256,10 @@ exports.postSetNewPassword = (req, res, next) => {
                 }
             });
         })
-        .catch(err => console.log(err))
-
-
+        .catch(err => {
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
+        })
 }

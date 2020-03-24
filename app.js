@@ -52,12 +52,15 @@ app.use((req, res, next) => {
     // //for the moment,just mock the id
     User.findById(req.session.user._id)
         .then(user => {
+            if(!user){
+                return next();
+            }
             //req.user = new User(user._id,user.email,user.password,user.isAdmin,user.cart);
             req.user = user; // <-- This is a FULL Mongoose Module so i can user ALL the method associated to a model;
             next();
         })
         .catch(err => {
-            console.log(`error on retrieving user to pass all view ${err}`);
+            throw new Error(err);
         })
 });
 //Add some local variables (which means that they are available in ALL Views)
@@ -70,11 +73,23 @@ app.use((req,res,next)=>{
     next();
 })
 
+
+
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 //any other route NOT mapped will land here...
+
+app.get('/500',errorsController.get500);
+
 app.use(errorsController.pageNotFound);
+
+//handling error messages and redirect to pages 500
+app.use((error,req,res,next)=>{
+    req.flash('error',error.message);
+    console.log(error);
+    res.redirect('/500');
+})
 
 mongoose.connect(MONGODB_URI,{ useNewUrlParser: true , useUnifiedTopology: true})
 .then(result => {
