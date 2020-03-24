@@ -36,7 +36,10 @@ exports.getProducts = (req, res, next) => {
             });
         })
         .catch(err => {
-            console.log(`shop/product-list fetchAll error ${err}`);
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
         });
 }
 
@@ -51,7 +54,10 @@ exports.getProduct = (req, res, next) => {
             })
         })
         .catch(err => {
-            console.log(err);
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
         })
 }
 
@@ -82,7 +88,10 @@ exports.postCart = (req, res, next) => {
             res.redirect('/cart');
         })
         .catch(err => {
-            console.log(`error while adding product in carts ${err}`);
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
         })
 
 }
@@ -95,7 +104,10 @@ exports.postCartDeleteItem = (req, res, next) => {
         res.redirect('/cart');
     })
     .catch(err => {
-        console.log(`error while deleting prodCart item ${err}`);
+        const error = new Error();
+        error.httpStatusCode = 500;
+        error.message = err;
+        return next(error);
     })
 }
 
@@ -145,6 +157,9 @@ exports.addOrder = (req, res, next) => {
             res.redirect('/orders');
         })
         .catch(err => {
-            console.log(`error while creating order ${err}`);
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
         })
 }
