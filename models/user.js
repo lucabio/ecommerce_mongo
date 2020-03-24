@@ -19,6 +19,8 @@ const userSchema = new Schema({
         type: String,
         require: true
     },
+    resetToken : String,
+    resetTokenExpiry : Date,
     cart: {
         items: [{
             productId: {
@@ -32,6 +34,7 @@ const userSchema = new Schema({
             }
         }]
     }
+    
 })
 //we should use that sintax (= function()) so we can use 'this' reference
 userSchema.methods.addToCart = function (product, qty) {

@@ -2,18 +2,26 @@ const express = require('express');
 
 const authController = require('../controllers/auth');
 
-const {check,validationResult} = require('express-validator');
+const validations = require('../controllers/validations/validations');
 
 const router = express.Router();
 
-router.get('/login',authController.getLogin);
+router.get('/login', authController.getLogin);
 
-router.get('/signup',authController.getSignup);
+router.get('/signup', authController.getSignup);
 
-router.post('/login',authController.postLogin);
+router.get('/reset-password', authController.getResetPassword);
 
-router.post('/signup',check('email').isEmail(),authController.postSignup);
+router.get('/set-new-password/:token', authController.getSetNewPassword);
 
-router.post('/logout',authController.postLogout);
+router.post('/reset-password', authController.postResetPassword);
+
+router.post('/set-new-password', authController.postSetNewPassword);
+
+router.post('/login', validations.loginValidations,authController.postLogin);
+
+router.post('/signup', validations.signupValidation,authController.postSignup);
+
+router.post('/logout', authController.postLogout);
 
 module.exports = router;

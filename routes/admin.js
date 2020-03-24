@@ -4,6 +4,8 @@ const adminController = require('../controllers/admin');
 
 const isAuth = require('../middleware/is-auth');
 
+const validations = require('../controllers/validations/validations')
+
 const router = express.Router();
 
 // /admin/add-product => GET
@@ -12,8 +14,8 @@ router.get('/edit-product/:productId',isAuth,adminController.getEditProduct);
 router.get('/products',isAuth,adminController.getProductList);
 
 // /admin/add-product => POST
-router.post('/add-product',isAuth,adminController.postAddProduct);
-router.post('/edit-product',isAuth,adminController.postEditProduct);
+router.post('/add-product',validations.productValidation,isAuth,adminController.postAddProduct);
+router.post('/edit-product',validations.productValidation,isAuth,adminController.postEditProduct);
 router.post('/delete-product',isAuth,adminController.postDeleteProduct);
 
 module.exports = router;

@@ -1,15 +1,47 @@
 const Product = require('../models/product');
 
+const {validationResult} = require('express-validator');
+
 exports.getAddProduct = (req, res, next) => {
     res.render('admin/edit-product', {
         pageTitle: 'Add Product',
         path: '/admin/add-product',
-        editing: false
+        editing: false,
+        hasError : false,
+        errorMessage: null,
+        validationErrors: [],
+        product: {
+            title: '',
+            imageUrl: '',
+            price : '',
+            description: ''
+        }
     })
 };
 
 exports.postAddProduct = (req, res, next) => {
     const data = req.body;
+    const errors = validationResult(req);
+    console.log(errors);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        return res.status(422).render('admin/edit-product', {
+            pageTitle: 'Add Product',
+            path: '/admin/add-product',
+            errorMessage: errors.array()[0].msg,
+            hasError : true,
+            product : {
+                title: data.title,
+                imageUrl: data.imageUrl,
+                price : data.price,
+                description: data.description
+            },
+            validationErrors: errors.array(),
+            editing: false,
+        })
+
+    }
+
     const product = new Product({
         title: data.title,
         description: data.description,
@@ -43,7 +75,10 @@ exports.getEditProduct = (req, res, next) => {
                     pageTitle: 'Edit Product',
                     path: '/admin/add-product',
                     editing: editMode,
-                    product: product
+                    product: product,
+                    hasError:false,
+                    validationErrors:[],
+                    errorMessage: null,
                 })
             }
         })
@@ -55,18 +90,44 @@ exports.getEditProduct = (req, res, next) => {
 exports.postEditProduct = (req, res, next) => {
     const data = req.body;
 
+    const errors = validationResult(req);
+    console.log(errors);
+    if (!errors.isEmpty()) {
+        console.log(errors);
+        return res.status(422).render('admin/edit-product', {
+            pageTitle: 'Edit Product',
+            path: '/admin/add-product',
+            errorMessage: errors.array()[0].msg,
+            hasError : true,
+            product : {
+                title: data.title,
+                imageUrl: data.imageUrl,
+                price : data.price,
+                description: data.description,
+                _id : data.id
+            },
+            validationErrors: errors.array(),
+            editing: true,
+        })
+
+    }
+    
     Product.findById(data.id)
     .then(product => {
+        console.log(product);
+        if(product.userId.toString() !== req.user._id.toString()){
+            return res.redirect('/');
+        }
+        console.log(product);
         product.title = data.title;
         product.description = data.description;
         product.imageUrl = data.imageUrl;
         product.price = data.price;
 
-        return product.save();
-    })
-    .then(result => {
-        console.log('product updated' + result);
-        res.redirect('/admin/products')
+        return product.save().then(result => {
+            console.log('product updated' + result);
+            res.redirect('/admin/products')
+        });
     })
     .catch(err => {
         console.log('error while update ' + err);
@@ -74,7 +135,8 @@ exports.postEditProduct = (req, res, next) => {
 };
 
 exports.getProductList = (req, res, next) => {
-    Product.find()
+    //added authorization to allow only the user that created the item to edit or delete it
+    Product.find({userId : req.user._id})
         .then(products => {
             res.render('admin/products', {
                 pageTitle: 'Admin Products List',
@@ -89,7 +151,7 @@ exports.getProductList = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.findByIdAndRemove(prodId)
+    Product.deleteOne({_id : prodId,userId : req.user._id})
     .then(() => {
         res.redirect('/admin/products');
     })

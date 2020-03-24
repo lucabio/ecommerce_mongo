@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //register sessions
 app.use(
-    session({secret : 'my secret', resave : false, saveUninitialized : false, store : store})
+    session({secret : 'my secret', resave : false, saveUninitialized : false, store : store,cookie :{maxAge:false}})
     );
 
 app.use(csrfProtection);
