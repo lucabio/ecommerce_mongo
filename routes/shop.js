@@ -16,9 +16,11 @@ router.get('/products/:productId',productsController.getProduct);
 
 router.get('/cart',isAuth,productsController.getCart);
 
-router.post('/cart',isAuth,productsController.postCart);
-
 router.get('/orders',isAuth,productsController.getOrder);
+
+router.get('/downloadInvoice/:orderId',isAuth,productsController.getInvoice);
+
+router.post('/cart',isAuth,productsController.postCart);
 
 // router.get('/checkout',productsController.getCheckout);
 

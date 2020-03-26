@@ -3,44 +3,74 @@ const Product = require('../models/product');
 const User = require('../models/user');
 const Order = require('../models/order');
 
+const fs = require('fs');
+const path = require('path');
+
+const PDFDocument = require('pdfkit');
+
+const ITEMS_PER_PAGE = 1;
+
 exports.getIndex = (req, res, next) => {
-    Product.find()
-        .then((products) => {
-            res.render('shop/index', {
-                prods: products,
-                path: '/',
-                pageTitle: 'Home Page'
-            });
-        })
-        .catch(err => {
-            console.log(`shop/index fetchAll error ${err}`);
+    const page = +req.query.page || 1;
+    let totalItems;
+    //pagination
+    Product.countDocuments().then(prodNumber => {
+        totalItems = prodNumber;
+        return Product.find()
+            .skip((page - 1) * ITEMS_PER_PAGE)
+            .limit(ITEMS_PER_PAGE)
+    }).then((products) => {
+        res.render('shop/index', {
+            prods: products,
+            path: '/',
+            pageTitle: 'Home Page',
+            currentPage : page,
+            hasNextPage : ITEMS_PER_PAGE * page < totalItems,
+            hasPreviousPage : page > 1,
+            nextPage : page + 1,
+            previousPage : page - 1,
+            lastPage : Math.ceil(totalItems / ITEMS_PER_PAGE) 
         });
+    })
+    .catch(err => {
+        const error = new Error();
+        error.httpStatusCode = 500;
+        error.message = err;
+        return next(error);
+    });
 }
 
 exports.getProducts = (req, res, next) => {
     //in this case set automatically the headers to text/html
     //res.send('<h1>Hello from Express</h1>');
-    Product.find()
-        //.select('title price -_id') 
-        // with this i can retrieve ONLY the fields specified here
-        //.populate('userId','name') 
-        // with this i populate the object with the data of relation (we can even use for example user.userId if we have nested relations)
-        // in populate,in the second argument i can ask for some certain field instead of all (ex : 'userId','name')
-
-        .then((products) => {
-            console.log(products)
-            res.render('shop/product-list', {
-                prods: products,
-                path: '/products',
-                pageTitle: 'Shop'
-            });
-        })
-        .catch(err => {
-            const error = new Error();
-            error.httpStatusCode = 500;
-            error.message = err;
-            return next(error);
+    const page = +req.query.page || 1;
+    let totalItems;
+    //pagination
+    Product.countDocuments().then(prodNumber => {
+        totalItems = prodNumber;
+        return Product.find()
+            .skip((page - 1) * ITEMS_PER_PAGE)
+            .limit(ITEMS_PER_PAGE)
+    })
+    .then((products) => {
+        res.render('shop/product-list', {
+            prods: products,
+            path: '/products',
+            pageTitle: 'Home Page',
+            currentPage : page,
+            hasNextPage : ITEMS_PER_PAGE * page < totalItems,
+            hasPreviousPage : page > 1,
+            nextPage : page + 1,
+            previousPage : page - 1,
+            lastPage : Math.ceil(totalItems / ITEMS_PER_PAGE) 
         });
+    })
+    .catch(err => {
+        const error = new Error();
+        error.httpStatusCode = 500;
+        error.message = err;
+        return next(error);
+    });
 }
 
 exports.getProduct = (req, res, next) => {
@@ -63,16 +93,16 @@ exports.getProduct = (req, res, next) => {
 
 exports.getCart = (req, res, next) => {
     req.user
-    .populate('cart.items.productId')
-    .execPopulate()
-    .then(user => {
-        console.log(user.cart.items);
-        res.render('shop/cart', {
-            path: '/cart',
-            pageTitle: 'Cart',
-            products: user.cart.items
-        });
-    })
+        .populate('cart.items.productId')
+        .execPopulate()
+        .then(user => {
+            console.log(user.cart.items);
+            res.render('shop/cart', {
+                path: '/cart',
+                pageTitle: 'Cart',
+                products: user.cart.items
+            });
+        })
 }
 
 exports.postCart = (req, res, next) => {
@@ -100,15 +130,15 @@ exports.postCartDeleteItem = (req, res, next) => {
     const prodId = req.body.productId;
 
     req.user.removeCartItem(prodId)
-    .then(result => {
-        res.redirect('/cart');
-    })
-    .catch(err => {
-        const error = new Error();
-        error.httpStatusCode = 500;
-        error.message = err;
-        return next(error);
-    })
+        .then(result => {
+            res.redirect('/cart');
+        })
+        .catch(err => {
+            const error = new Error();
+            error.httpStatusCode = 500;
+            error.message = err;
+            return next(error);
+        })
 }
 
 exports.getCheckout = (req, res, next) => {
@@ -119,15 +149,15 @@ exports.getCheckout = (req, res, next) => {
 }
 
 exports.getOrder = (req, res, next) => {
-    Order.find({'user.userId' : req.user})
-    .then(orders => {
-        console.log(orders)
-        res.render('shop/orders', {
-            path: '/orders',
-            pageTitle: 'Orders',
-            orders : orders
+    Order.find({ 'user.userId': req.user })
+        .then(orders => {
+            console.log(orders)
+            res.render('shop/orders', {
+                path: '/orders',
+                pageTitle: 'Orders',
+                orders: orders
+            })
         })
-    })
 
 }
 
@@ -137,7 +167,7 @@ exports.addOrder = (req, res, next) => {
         .execPopulate()
         .then(user => {
             const products = user.cart.items.map(i => {
-                return { quantity: i.quantity, product: {...i.productId._doc} }
+                return { quantity: i.quantity, product: { ...i.productId._doc } }
             });
 
             const order = new Order({
@@ -151,7 +181,7 @@ exports.addOrder = (req, res, next) => {
             return order.save();
         })
         .then(result => {
-            return req.user.clearCart();           
+            return req.user.clearCart();
         })
         .then(result => {
             res.redirect('/orders');
@@ -162,4 +192,42 @@ exports.addOrder = (req, res, next) => {
             error.message = err;
             return next(error);
         })
+}
+
+exports.getInvoice = (req, res, next) => {
+    const orderId = req.params.orderId;
+
+    Order.findById(orderId).then(order => {
+        if (!order) {
+            return next(new Error('Order not found.'))
+        }
+        if (order.user.userId.toString() !== req.user._id.toString()) {
+            return next(new Error('Not Authorized.'))
+        } else {
+            const invoiceName = 'invoice-' + orderId + '.pdf';
+
+            const invoicePath = path.join('data', 'invoices', invoiceName);
+
+            const pdfDoc = new PDFDocument();
+
+            pdfDoc.pipe(fs.createWriteStream(invoicePath));
+            pdfDoc.pipe(res);
+
+            pdfDoc.fontSize(20);
+            pdfDoc.text('Invoice', { underline: true });
+
+            pdfDoc.text('-------------------------------');
+            let totalPrice = 0;
+            order.products.forEach(prod => {
+                pdfDoc.fontSize(14).text(prod.product.title + ' - ' + prod.quantity + ' x ' + '$' + prod.product.price);
+                totalPrice += prod.quantity * prod.product.price;
+            });
+
+            pdfDoc.text('Total Price :' + totalPrice + '$');
+
+            pdfDoc.end();
+        }
+    }).catch(err => {
+        return next(err);
+    });
 }

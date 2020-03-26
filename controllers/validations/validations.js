@@ -73,8 +73,6 @@ exports.productValidation = [
     .notEmpty().withMessage('Title cannot be empty')
     .isLength({min : 3}).withMessage('Title must have minimum length of 3 characters')
     .trim(),
-    check('imageUrl','Please enter a valid URL')
-    .isURL(),
     check('price','Please enter a price that contains only numbers')
     .isFloat(),
     check('description','Please enter a description between 7 and 120 characters')
