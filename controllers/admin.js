@@ -1,5 +1,7 @@
 const Product = require('../models/product');
 
+const fileHelper = require('../util/file');
+
 const { validationResult } = require('express-validator');
 
 exports.getAddProduct = (req, res, next) => {
@@ -21,6 +23,7 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
     const data = req.body;
+    const image = req.file;
     const errors = validationResult(req);
     console.log(errors);
     if (!errors.isEmpty()) {
@@ -32,7 +35,6 @@ exports.postAddProduct = (req, res, next) => {
             hasError: true,
             product: {
                 title: data.title,
-                imageUrl: data.imageUrl,
                 price: data.price,
                 description: data.description
             },
@@ -41,17 +43,33 @@ exports.postAddProduct = (req, res, next) => {
         })
 
     }
+    
+    if (!image) {
+        return res.status(422).render('admin/edit-product', {
+            pageTitle: 'Add Product',
+            path: '/admin/add-product',
+            errorMessage: 'Attached file is not an image',
+            hasError: true,
+            product: {
+                title: data.title,
+                price: data.price,
+                description: data.description
+            },
+            validationErrors: [],
+            editing: false,
+        })
+    }
 
     const product = new Product({
         title: data.title,
         description: data.description,
-        imageUrl: data.imageUrl,
+        imageUrl: image.path,
         price: data.price,
         // userId : req.user._id --> instead
         userId: req.user // --> we use the entire user obj and mongoose will pick the _id automatically due to the relation between user and product
     });
     product.save()
-        .then(res => {
+        .then(result => {
             console.log('Inserted Product');
             res.redirect('/')
         })
@@ -100,7 +118,7 @@ exports.getEditProduct = (req, res, next) => {
 
 exports.postEditProduct = (req, res, next) => {
     const data = req.body;
-
+    const image = req.file;
     const errors = validationResult(req);
     console.log(errors);
     if (!errors.isEmpty()) {
@@ -112,7 +130,6 @@ exports.postEditProduct = (req, res, next) => {
             hasError: true,
             product: {
                 title: data.title,
-                imageUrl: data.imageUrl,
                 price: data.price,
                 description: data.description,
                 _id: data.id
@@ -120,7 +137,6 @@ exports.postEditProduct = (req, res, next) => {
             validationErrors: errors.array(),
             editing: true,
         })
-
     }
 
     Product.findById(data.id)
@@ -132,7 +148,10 @@ exports.postEditProduct = (req, res, next) => {
             console.log(product);
             product.title = data.title;
             product.description = data.description;
-            product.imageUrl = data.imageUrl;
+            if(image){
+                fileHelper.deleteFile(product.imageUrl);
+                product.imageUrl = image.path;
+            }
             product.price = data.price;
 
             return product.save().then(result => {
@@ -168,14 +187,25 @@ exports.getProductList = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteOne({ _id: prodId, userId: req.user._id })
-        .then(() => {
-            res.redirect('/admin/products');
-        })
-        .catch(err => {
-            const error = new Error();
-            error.httpStatusCode = 500;
-            error.message = err;
-            return next(error);
-        });
+    Product.findById(prodId).then(product => {
+        if(product){
+            fileHelper.deleteFile(product.imageUrl);
+            Product.deleteOne({ _id: prodId, userId: req.user._id })
+            .then(() => {
+                res.redirect('/admin/products');
+            })
+            .catch(err => {
+                const error = new Error();
+                error.httpStatusCode = 500;
+                error.message = err;
+                return next(error);
+            });
+        }else{
+            return next(new Error('no product found'));
+        }
+        
+    })
+    .catch(err => {
+        return next(new Error(err));
+    })
 }
