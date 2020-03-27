@@ -22,10 +22,14 @@ router.get('/downloadInvoice/:orderId',isAuth,productsController.getInvoice);
 
 router.post('/cart',isAuth,productsController.postCart);
 
-// router.get('/checkout',productsController.getCheckout);
+router.get('/checkout',isAuth,productsController.getCheckout);
+
+router.get('/checkout/success',isAuth,productsController.getCheckoutSuccess);
+
+router.get('/checkout/cancel',isAuth,productsController.getCheckout);
 
 router.post('/cart-delete-item',isAuth,productsController.postCartDeleteItem);
 
-router.post('/create-order',isAuth,productsController.addOrder);
+//router.post('/create-order',isAuth,productsController.postOrder);
 
 module.exports = router;
