@@ -43,7 +43,7 @@ exports.postAddProduct = (req, res, next) => {
         })
 
     }
-    
+
     if (!image) {
         return res.status(422).render('admin/edit-product', {
             pageTitle: 'Add Product',
@@ -148,7 +148,7 @@ exports.postEditProduct = (req, res, next) => {
             console.log(product);
             product.title = data.title;
             product.description = data.description;
-            if(image){
+            if (image) {
                 fileHelper.deleteFile(product.imageUrl);
                 product.imageUrl = image.path;
             }
@@ -185,27 +185,26 @@ exports.getProductList = (req, res, next) => {
         })
 };
 
-exports.postDeleteProduct = (req, res, next) => {
-    const prodId = req.body.productId;
-    Product.findById(prodId).then(product => {
-        if(product){
-            fileHelper.deleteFile(product.imageUrl);
-            Product.deleteOne({ _id: prodId, userId: req.user._id })
-            .then(() => {
-                res.redirect('/admin/products');
-            })
-            .catch(err => {
-                const error = new Error();
-                error.httpStatusCode = 500;
-                error.message = err;
-                return next(error);
-            });
-        }else{
-            return next(new Error('no product found'));
-        }
-        
-    })
-    .catch(err => {
-        return next(new Error(err));
-    })
+exports.deleteProduct = (req, res, next) => {
+    const prodId = req.params.productId;
+    Product.findById(prodId)
+        .then(product => {
+            if (product) {
+                fileHelper.deleteFile(product.imageUrl);
+                return Product.deleteOne({ _id: prodId, userId: req.user._id })
+            } else {
+                return next(new Error('no product found'));
+            }
+        })
+        .then(() => {
+            res.status(200).json({ message: 'product delect correctly' })
+            //res.redirect('/admin/products');
+        })
+        .catch(err => {
+            // const error = new Error();
+            // error.httpStatusCode = 500;
+            // error.message = err;
+            // return next(error);
+            res.status(500).json({ message: 'error while deleting product' })
+        })
 }

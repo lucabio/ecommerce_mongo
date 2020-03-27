@@ -13,6 +13,7 @@ Installed Packages
 <pre>npm install --save express-validator [Form validator]</pre>
 <pre>npm install --save multer [Allow to accept binary data - for image upload]</pre>
 <pre>npm install --save pdfkit [Tool to create pdf]</pre>
+<pre>npm install --save stripe [Provider for Online Payments]</pre>
 
 
 -- UI Dependencies --
